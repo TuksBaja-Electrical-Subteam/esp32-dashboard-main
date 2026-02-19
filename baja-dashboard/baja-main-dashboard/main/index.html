@@ -1,27 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BAJA Dashboard</title>
+    <title>BAJA PRO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: 'Arial Black', sans-serif; text-align: center; background: #000; color: #ff5500; }
-        .container { border: 4px solid #333; margin: 20px auto; padding: 20px; width: 80%; border-radius: 20px; }
-        #speed { font-size: 120px; text-shadow: 0 0 20px #ff5500; }
-        .unit { font-size: 30px; color: #666; }
+        :root { --glow: #ff5500; --bg: #0a0a0a; --card: #161616; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; text-align: center; margin: 0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; max-width: 600px; margin: auto; }
+        .card { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #333; }
+        .full { grid-column: span 2; }
+        #speed { font-size: 80px; font-weight: bold; color: var(--glow); text-shadow: 0 0 20px var(--glow); }
+        .unit { color: #666; font-size: 14px; text-transform: uppercase; }
+        canvas { background: #000; border-radius: 15px; width: 100%; height: 200px; border: 1px solid #333; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="unit">BAJA SPEED</div>
-        <div id="speed">0.0</div>
-        <div class="unit">KM/H</div>
+    <h2 style="margin-top:20px; letter-spacing:4px;">BAJA <span style="color:var(--glow)">PRO</span></h2>
+    <div class="grid">
+        <div class="card full">
+            <div id="speed">0.0</div>
+            <div class="unit">Kilometers Per Hour</div>
+        </div>
+        <div class="card">
+            <div id="dist" style="font-size:24px;">0.000</div>
+            <div class="unit">Distance (KM)</div>
+        </div>
+        <div class="card">
+            <div id="coords" style="font-size:12px; color:#aaa;">Searching...</div>
+            <div class="unit">GPS Position</div>
+        </div>
+        <div class="card full">
+            <div class="unit" style="margin-bottom:10px;">Live Track Plotter</div>
+            <canvas id="track"></canvas>
+        </div>
     </div>
+
     <script>
-        setInterval(() => {
+        const canvas = document.getElementById('track');
+        const ctx = canvas.getContext('2d');
+        let points = [];
+
+        function update() {
             fetch('/data').then(r => r.text()).then(v => {
-                document.getElementById('speed').innerText = v;
+                const [speed, dist, lat, lon] = v.split(',');
+                document.getElementById('speed').innerText = speed;
+                document.getElementById('dist').innerText = dist;
+                document.getElementById('coords').innerText = `${lat}, ${lon}`;
+                
+                // Add to track
+                if(lat != 0) {
+                    points.push({x: parseFloat(lon), y: parseFloat(lat)});
+                    drawTrack();
+                }
             });
-        }, 200);
+        }
+
+        function drawTrack() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#ff5500';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            // Simple auto-scaling logic would go here
+            points.forEach((p, i) => {
+                const px = (p.x % 1) * 5000; // Visual scale factor
+                const py = (p.y % 1) * 5000;
+                if(i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            });
+            ctx.stroke();
+        }
+        setInterval(update, 500);
     </script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 #include <esp_http_server.h>
 #include "web_server.h"
+#include "speed_calculator.h"
 
-extern float current_speed;
 extern const uint8_t index_html_start[] asm("_binary_index_html_start");
 extern const uint8_t index_html_end[]   asm("_binary_index_html_end");
 
@@ -12,8 +12,9 @@ static esp_err_t root_get_handler(httpd_req_t *req) {
 }
 
 static esp_err_t data_get_handler(httpd_req_t *req) {
-    char val[12];
-    snprintf(val, sizeof(val), "%.1f", current_speed);
+    char val[32];
+    // Formats as "speed,distance"
+    snprintf(val, sizeof(val), "%.1f,%.3f", get_current_speed(), get_total_distance());
     httpd_resp_send(req, val, HTTPD_RESP_USE_STRLEN);
     return ESP_OK;
 }
